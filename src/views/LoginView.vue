@@ -41,7 +41,7 @@ export default {
       });
       const data = await response.json();
       if (response.ok) {
-        alert(data.message);
+        //alert(data.message);
         localStorage.setItem('authToken', data.token); // Armazenar o token com a chave 'authToken'
         this.$router.push('/dashboard'); // Redirecionar para o Dashboard
       } else {

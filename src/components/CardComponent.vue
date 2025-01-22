@@ -1,5 +1,10 @@
 <template>
-  <div>
+  <div
+  class="card"
+    draggable="true"
+    @dragstart="dragStart"
+    @dragend="dragEnd"
+  >
     <h4>{{ card.title }}</h4>
     <p>{{ card.description }}</p>
   </div>
@@ -8,9 +13,17 @@
 <script>
 export default {
   props: ['card'],
-  name: 'CardComponent'
+  name: 'CardComponent',
+  methods: {
+    dragStart(event) {
+      event.dataTransfer.setData('cardId', this.card._id);
+    },
+    dragEnd() {
+    },
+  },
 };
 </script>
+
 
 <style scoped>
 h4 {
