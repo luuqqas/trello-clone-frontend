@@ -155,7 +155,7 @@ export default {
         if (!token) {
           throw new Error('Token de autenticação não encontrado');
         }
-        const response = await fetch(`/api/boards/${boardId}`, {
+        const response = await fetch(`/api/boards/delete/${boardId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}` // Incluir o token de autenticação no cabeçalho
