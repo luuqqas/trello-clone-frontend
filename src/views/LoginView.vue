@@ -27,94 +27,32 @@ export default {
     };
   },
   methods: {
-  async login() {
-    try {
-      const response = await fetch('/api/auth/login', { // Certifique-se de que a rota está correta
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          email: this.email,
-          password: this.password
-        })
-      });
-      const data = await response.json();
-      if (response.ok) {
-        //alert(data.message);
-        localStorage.setItem('authToken', data.token); // Armazenar o token com a chave 'authToken'
-        this.$router.push('/dashboard'); // Redirecionar para o Dashboard
-      } else {
-        this.errorMessage = data.error; // Definir a mensagem de erro para exibição
+    async login() {
+      try {
+        const response = await fetch('/api/auth/login', { // Certifique-se de que a rota está correta
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            email: this.email,
+            password: this.password
+          })
+        });
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('authToken', data.accessToken); // Certifique-se de que o token está sendo armazenado com a chave correta
+          this.$router.push('/dashboard'); // Redirecionar para o Dashboard
+        } else {
+          this.errorMessage = data.error; // Definir a mensagem de erro para exibição
+        }
+      } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        this.errorMessage = 'Erro ao fazer login'; // Definir uma mensagem de erro genérica
       }
-    } catch (error) {
-      console.error('Erro ao fazer login:', error);
-      this.errorMessage = 'Erro ao fazer login'; // Definir uma mensagem de erro genérica
     }
   }
-}
 };
 </script>
 
-<style scoped>
-.login-container {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #fff;
-  border-radius: 5px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-  animation: fadeIn 0.5s ease-in-out;
-}
-
-.form-group {
-  margin-bottom: 15px;
-}
-
-label {
-  display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-.btn {
-  width: 100%;
-  padding: 10px;
-  background-color: #026aa7;
-  color: #fff;
-  border: none;
-  border-radius: 3px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.btn:hover {
-  background-color: #005a8c;
-}
-
-.error-message {
-  color: red;
-  margin-top: 10px;
-  font-weight: bold;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-</style>
+<style scoped src="./LoginView.css"></style>
