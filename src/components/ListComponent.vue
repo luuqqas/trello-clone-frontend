@@ -7,7 +7,7 @@
     @dragover.prevent
     @drop="drop"
   >
-    <input type="text" v-model="localList.title" class="list-title" @change="updateListTitle(localList)">
+    <input type="text" v-model="localList.title" class="list-title" :style="{ color: textColor }" @change="updateListTitle(localList)">
     <div class="list-buttons">
       <button @click="addCard" class="add-card">Adicionar Cartão</button>
       <button @click="deleteList" class="delete-list">Remover Lista</button>
@@ -20,7 +20,7 @@
       @dragleave="dragLeave"
       @drop="dropOnCard(index)"
     >
-      <CardComponent :card="card" @update-card-content="updateCardContent" @delete-card="deleteCard" />
+      <CardComponent :card="card" :textColor="textColor" @update-card-content="updateCardContent" @delete-card="deleteCard" />
     </div>
   </div>
 </template>
@@ -29,7 +29,7 @@
 import CardComponent from './CardComponent.vue';
 
 export default {
-  props: ['list'],
+  props: ['list','textColor'],
   components: {
     CardComponent, // Certifique-se de que todos os componentes aqui estão sendo usados
   },
