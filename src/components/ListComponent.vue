@@ -25,26 +25,25 @@
   </div>
 </template>
 
-
 <script>
 import CardComponent from './CardComponent.vue';
 
 export default {
   props: ['list'],
   components: {
-    CardComponent,
+    CardComponent, // Certifique-se de que todos os componentes aqui estão sendo usados
   },
-  emits: ['move-card', 'move-list', 'update-list-title', 'add-card', 'delete-list', 'delete-card', 'update-card-content', 'drag-end'], // Certifique-se de que os eventos estão definidos corretamente
+  emits: ['move-card', 'move-list', 'update-list-title', 'add-card', 'delete-list', 'delete-card', 'update-card-content', 'drag-end'],
   data() {
     return {
-      localList: JSON.parse(JSON.stringify(this.list)), // Crie uma cópia local da prop
+      localList: JSON.parse(JSON.stringify(this.list)),
       draggedOverCardIndex: null
     };
   },
   watch: {
     list: {
       handler(newList) {
-        this.localList = JSON.parse(JSON.stringify(newList)); // Atualize a cópia local quando a prop mudar
+        this.localList = JSON.parse(JSON.stringify(newList));
       },
       deep: true
     }
@@ -64,20 +63,20 @@ export default {
       this.draggedOverCardIndex = null;
     },
     drop(event) {
-      const cardId = event.dataTransfer.getData('cardId'); // Recupera o ID do cartão arrastado
-      const fromListId = event.dataTransfer.getData('fromListId'); // Recupera o ID da lista de origem
-      const listId = event.dataTransfer.getData('listId'); // Recupera o ID da lista arrastada
+      const cardId = event.dataTransfer.getData('cardId');
+      const fromListId = event.dataTransfer.getData('fromListId');
+      const listId = event.dataTransfer.getData('listId');
       if (cardId) {
-        this.$emit('move-card', cardId, this.localList._id, fromListId, this.draggedOverCardIndex); // Emite o evento para o pai
+        this.$emit('move-card', cardId, this.localList._id, fromListId, this.draggedOverCardIndex);
       } else if (listId) {
-        this.$emit('move-list', listId, this.localList._id); // Emite o evento de mover lista
+        this.$emit('move-list', listId, this.localList._id);
       }
     },
     dropOnCard(index) {
-      const cardId = event.dataTransfer.getData('cardId'); // Recupera o ID do cartão arrastado
-      const fromListId = event.dataTransfer.getData('fromListId'); // Recupera o ID da lista de origem
+      const cardId = event.dataTransfer.getData('cardId');
+      const fromListId = event.dataTransfer.getData('fromListId');
       if (cardId) {
-        this.$emit('move-card', cardId, this.localList._id, fromListId, index); // Emite o evento para o pai, com o índice do cartão sobre o qual ele foi solto
+        this.$emit('move-card', cardId, this.localList._id, fromListId, index);
       }
       this.draggedOverCardIndex = null;
     },
@@ -91,7 +90,7 @@ export default {
       this.$emit('delete-list', this.localList._id);
     },
     deleteCard(cardId) {
-      this.$emit('delete-card', cardId); // Emita o evento de deleção do cartão para o pai
+      this.$emit('delete-card', cardId);
     },
     updateCardContent(cardId, newContent) {
       this.$emit('update-card-content', cardId, newContent);
@@ -99,6 +98,10 @@ export default {
   }
 };
 </script>
+
+
+
+
 <style scoped>
 .list {
   background-color: #dfe1e6;
@@ -143,5 +146,3 @@ export default {
   color: white;
 }
 </style>
-
-

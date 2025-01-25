@@ -30,18 +30,32 @@
               <button @click="addList" class="add-list">Adicionar Lista</button>
               <button @click="deleteBoard(currentBoard._id)" class="delete-board">Remover Quadro</button>
             </div>
-            <div class="lists-container">
-              <ListComponent
-                v-for="list in currentBoard.lists"
+            <div
+              class="lists-container"
+              @dragover.prevent="handleDragOverContainer"
+              @drop="handleDrop"
+            >
+              <div
+                v-for="(list, index) in currentBoard.lists"
                 :key="list._id"
-                :list="list"
-                @move-card="moveCard"
-                @update-card-content="updateCardContent"
-                @update-list-title="updateListTitle"
-                @add-card="addCard"
-                @delete-list="deleteList"
-                @delete-card="deleteCard"
-              />
+                class="list-wrapper"
+                draggable="true"
+                @dragstart="handleDragStart(index)"
+                @dragenter="handleDragEnter(index)"
+                @dragover.prevent="handleDragOver"
+                @dragleave="handleDragLeave"
+                :class="{'drag-over': dragOverIndex === index}"
+              >
+                <ListComponent
+                  :list="list"
+                  @move-card="moveCard"
+                  @update-card-content="updateCardContent"
+                  @update-list-title="updateListTitle"
+                  @add-card="addCard"
+                  @delete-list="deleteList"
+                  @delete-card="deleteCard"
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -57,139 +71,119 @@
 
 
 
+
+
 <script>
-import ListComponent from '../components/ListComponent.vue'; 
+import ListComponent from '../components/ListComponent.vue';
 import axios from 'axios';
 
 export default {
   data() {
-  return {
-    showBoardsMenu: false,
-    newBoard: { title: '' },
-    boards: [],
-    currentBoard: null,
-    authToken: localStorage.getItem('authToken'), // Certifique-se de que o token está sendo obtido corretamente
-    isScrolled: false
-  };
-}
-,
+    return {
+      showBoardsMenu: false,
+      newBoard: { title: '' },
+      boards: [],
+      currentBoard: null,
+      authToken: localStorage.getItem('authToken'), // Certifique-se de que o token está sendo obtido corretamente
+      isScrolled: false,
+      draggedListIndex: null,
+      dragOverIndex: null,
+    };
+  },
   components: {
-    ListComponent
+    ListComponent,
   },
   methods: {
     async fetchBoards() {
-  try {
-    const token = this.authToken; // Certifique-se de que o token está definido e sendo utilizado
-    if (!token) {
-      throw new Error('Token de autenticação não encontrado');
-    }
-    console.log('Fetching boards with token:', token); // Logging do token
-    const response = await fetch('/api/boards', {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    this.boards = await response.json();
+      try {
+        const token = this.authToken;
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado');
+        }
+        console.log('Fetching boards with token:', token);
+        const response = await axios.get('/api/boards', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        this.boards = response.data;
 
-    // Verifique se há um quadro salvo no localStorage
-    const savedBoardId = localStorage.getItem('currentBoardId');
-    if (savedBoardId) {
-      const savedBoard = this.boards.find(board => board._id === savedBoardId);
-      if (savedBoard) {
-        this.selectBoard(savedBoard);
+        const savedBoardId = localStorage.getItem('currentBoardId');
+        if (savedBoardId) {
+          const savedBoard = this.boards.find(board => board._id === savedBoardId);
+          if (savedBoard) {
+            this.selectBoard(savedBoard);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar quadros:', error);
       }
-    }
-  } catch (error) {
-    console.error('Erro ao buscar quadros:', error);
-  }
-},
-  async createBoard() {
-    try {
-      const token = this.authToken; // Certifique-se de que o token está definido e sendo utilizado
-      if (!token) {
-        throw new Error('Token de autenticação não encontrado');
+    },
+    async createBoard() {
+      try {
+        const token = this.authToken;
+        if (!token) {
+          throw new Error('Token de autenticação não encontrado');
+        }
+        const response = await axios.post('/api/boards', { title: 'Novo Quadro' }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const board = response.data;
+        this.boards.push(board);
+        this.selectBoard(board);
+      } catch (error) {
+        console.error('Erro ao criar quadro:', error);
       }
-      const response = await fetch('/api/boards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title: 'Novo Quadro' })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      const board = await response.json();
-      this.boards.push(board);
-      this.selectBoard(board);
-    } catch (error) {
-      console.error('Erro ao criar quadro:', error);
-    }
-  },
+    },
     async selectBoard(board) {
       this.currentBoard = board;
-      localStorage.setItem('currentBoardId', board._id); // Salve o ID do quadro selecionado no localStorage
+      localStorage.setItem('currentBoardId', board._id);
       this.showBoardsMenu = false;
       await this.fetchLists(board._id);
     },
     async fetchLists(boardId) {
       try {
         const token = this.authToken;
-        const response = await fetch(`/api/lists/${boardId}`, {
+        const response = await axios.get(`/api/lists/${boardId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        this.currentBoard.lists = await response.json();
+        this.currentBoard.lists = response.data;
       } catch (error) {
         console.error('Erro ao buscar listas:', error);
       }
     },
     async addList() {
-    try {
-      const token = this.authToken;
-      const response = await fetch('/api/lists', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
+      try {
+        const token = this.authToken;
+        const response = await axios.post('/api/lists', {
           title: 'Nova Lista',
           boardId: this.currentBoard._id
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const list = response.data;
+        this.currentBoard.lists.push(list);
+      } catch (error) {
+        console.error('Erro ao adicionar lista:', error);
       }
-      const list = await response.json();
-      this.currentBoard.lists.push(list);
-    } catch (error) {
-      console.error('Erro ao adicionar lista:', error);
-    }
-  },
+    },
     async deleteBoard(boardId) {
       try {
         const token = this.authToken;
         if (!token) {
           throw new Error('Token de autenticação não encontrado');
         }
-        const response = await fetch(`/api/boards/delete/${boardId}`, {
-          method: 'DELETE',
+        await axios.delete(`/api/boards/delete/${boardId}`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
         this.boards = this.boards.filter(board => board._id !== boardId);
         if (this.currentBoard && this.currentBoard._id === boardId) {
           this.currentBoard = null;
@@ -200,216 +194,192 @@ export default {
       }
     },
     async deleteList(listId) {
-    try {
-      const token = this.authToken;
-      const response = await fetch(`/api/lists/${listId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      try {
+        const token = this.authToken;
+        await axios.delete(`/api/lists/${listId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        this.currentBoard.lists = this.currentBoard.lists.filter(list => list._id !== listId);
+      } catch (error) {
+        console.error('Erro ao deletar lista:', error);
       }
-      this.currentBoard.lists = this.currentBoard.lists.filter(list => list._id !== listId);
-    } catch (error) {
-      console.error('Erro ao deletar lista:', error);
-    }
-  },
-  async updateBoardTitle(board) {
-    try {
-      const token = this.authToken;
-      const response = await fetch(`/api/boards/${board._id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title: board.title })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    },
+    async updateBoardTitle(board) {
+      try {
+        const token = this.authToken;
+        await axios.put(`/api/boards/${board._id}`, { title: board.title }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao atualizar título do quadro:', error);
       }
-    } catch (error) {
-      console.error('Erro ao atualizar título do quadro:', error);
-    }
-  },
+    },
     async updateListTitle(listId, title) {
-    try {
-      const token = this.authToken;
-      await fetch(`/api/lists/${listId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ title })
-      });
-      const list = this.currentBoard.lists.find(list => list._id === listId);
-      if (list) {
-        list.title = title;
+      try {
+        const token = this.authToken;
+        await axios.put(`/api/lists/${listId}`, { title }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const list = this.currentBoard.lists.find(list => list._id === listId);
+        if (list) {
+          list.title = title;
+        }
+      } catch (error) {
+        console.error('Erro ao atualizar título da lista:', error);
       }
-    } catch (error) {
-      console.error('Erro ao atualizar título da lista:', error);
-    }
-  },
-  handleDragStart(index) {
-    this.draggedListIndex = index; // Armazena o índice da lista arrastada
-  },
-  async handleDrop(index) {
-    const movedList = this.localBoard.lists.splice(this.draggedListIndex, 1)[0]; // Remove a lista arrastada
-    this.localBoard.lists.splice(index, 0, movedList); // Insere a lista arrastada na nova posição
-    this.draggedListIndex = null; // Reseta o índice da lista arrastada
-
-    try {
-      const listsOrder = this.localBoard.lists.map(list => list._id);
-      await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder });
-
-      this.$emit('board-updated', this.localBoard); // Emite o evento para atualizar o estado no pai
-    } catch (error) {
-      console.error('Erro ao reordenar listas:', error);
-    }
-  },
-  async addCard(listId) {
-    try {
-      const token = this.authToken;
-      const response = await fetch('/api/cards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
+    },
+    async addCard(listId) {
+      try {
+        const token = this.authToken;
+        const response = await axios.post('/api/cards', {
           content: 'Novo Cartão',
           listId
-        })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const card = response.data;
+        const list = this.currentBoard.lists.find(list => list._id === listId);
+        if (list) {
+          list.cards.push(card);
+        }
+      } catch (error) {
+        console.error('Erro ao adicionar cartão:', error);
       }
-      const card = await response.json();
-      const list = this.currentBoard.lists.find(list => list._id === listId);
-      if (list) {
-        list.cards.push(card);
-      }
-    } catch (error) {
-      console.error('Erro ao adicionar cartão:', error);
-    }
     },
     async updateCardContent(cardId, newContent) {
-    try {
-      const token = this.authToken;
-      const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ content: newContent })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      try {
+        const token = this.authToken;
+        const response = await axios.put(`/api/cards/${cardId}`, { content: newContent }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-      const updatedCard = await response.json();
-      const targetCard = this.currentBoard.lists
-        .flatMap(list => list.cards)
-        .find(card => card._id === cardId);
+        const updatedCard = response.data;
+        const targetCard = this.currentBoard.lists
+          .flatMap(list => list.cards)
+          .find(card => card._id === cardId);
 
-      if (targetCard) {
-        targetCard.content = updatedCard.content;
-      }
-
-      this.$emit('board-updated', this.currentBoard); // Emitir evento para atualizar o estado no pai
-    } catch (error) {
-      console.error('Erro ao atualizar o conteúdo do cartão:', error);
-    }
-  },
-  async deleteCard(cardId) {
-    try {
-      const token = this.authToken;
-      const response = await fetch(`/api/cards/${cardId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
+        if (targetCard) {
+          targetCard.content = updatedCard.content;
         }
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+        this.$emit('board-updated', this.currentBoard);
+      } catch (error) {
+        console.error('Erro ao atualizar o conteúdo do cartão:', error);
       }
-      // Remover o cartão da lista localmente
-      this.currentBoard.lists.forEach(list => {
-        list.cards = list.cards.filter(card => card._id !== cardId);
-      });
-    } catch (error) {
-      console.error('Erro ao remover cartão:', error);
-    }
-  },
+    },
+    async deleteCard(cardId) {
+      try {
+        const token = this.authToken;
+        await axios.delete(`/api/cards/${cardId}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        this.currentBoard.lists.forEach(list => {
+          list.cards = list.cards.filter(card => card._id !== cardId);
+        });
+      } catch (error) {
+        console.error('Erro ao remover cartão:', error);
+      }
+    },
+    async moveCard(cardId, newListId, fromListId, newIndex) {
+      try {
+        console.log(`Movendo cartão ${cardId} da lista ${fromListId} para ${newListId} na posição ${newIndex}`);
+        const token = this.authToken;
+        const response = await axios.put(`/api/cards/${cardId}/move`, {
+          newListId, newIndex
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const updatedCard = response.data;
 
-  async moveCard(cardId, newListId, fromListId, newIndex) {
+        const fromList = this.currentBoard.lists.find(list => list._id === fromListId);
+        const newList = this.currentBoard.lists.find(list => list._id === newListId);
+
+        fromList.cards = fromList.cards.filter(card => card._id !== cardId);
+        newList.cards.splice(newIndex, 0, updatedCard);
+
+        console.log(`Cartão ${cardId} movido com sucesso`);
+        this.$emit('board-updated', this.currentBoard);
+      } catch (error) {
+        console.error('Erro ao mover o cartão:', error);
+      }
+    },
+    async moveList(listId, newIndex) {
+      try {
+        const token = localStorage.getItem('authToken');
+        await axios.put(`/api/lists/${listId}/move`, { newIndex }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        const list = this.currentBoard.lists.find(l => l._id === listId);
+        this.currentBoard.lists = this.currentBoard.lists.filter(l => l._id !== listId);
+        this.currentBoard.lists.splice(newIndex, 0, list);
+
+        this.$emit('board-updated', this.currentBoard);
+      } catch (error) {
+        console.error('Erro ao mover a lista:', error);
+      }
+    },
+    async handleDragStart(index) {
+      this.draggedListIndex = index;
+    },
+    async handleDragEnter(index) {
+      if (index !== this.draggedListIndex) {
+        this.dragOverIndex = index;
+      }
+    },
+    async handleDragLeave() {
+      this.dragOverIndex = null;
+    },
+    async handleDragOver(event) {
+      event.preventDefault();
+    },
+    async handleDrop() {
+  if (this.dragOverIndex !== null && this.dragOverIndex !== this.draggedListIndex) {
+    const lists = this.currentBoard.lists;
+    const draggedList = lists[this.draggedListIndex];
+    lists.splice(this.draggedListIndex, 1); // Remove a lista arrastada
+    lists.splice(this.dragOverIndex, 0, draggedList); // Adicione a lista arrastada na nova posição
+  }
+  this.draggedListIndex = null; // Reseta o índice da lista arrastada
+  this.dragOverIndex = null; // Reseta o índice da lista sobre a qual estamos arrastando
+
   try {
-    console.log(`Movendo cartão ${cardId} da lista ${fromListId} para ${newListId} na posição ${newIndex}`);
-    const token = this.authToken;
-    const response = await fetch(`/api/cards/${cardId}/move`, {
-      method: 'PUT',
+    const listsOrder = this.currentBoard.lists.map(list => list._id);
+    const token = this.authToken; // Inclua o token no cabeçalho
+    await axios.put(`/api/boards/${this.currentBoard._id}/lists/reorder`, { listsOrder }, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
-      },
-      body: JSON.stringify({ newListId, newIndex })
+        'Authorization': `Bearer ${token}` // Inclua o token no cabeçalho
+      }
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const updatedCard = await response.json();
 
-    // Atualizar o estado local do quadro
-    const fromList = this.currentBoard.lists.find(list => list._id === fromListId);
-    const newList = this.currentBoard.lists.find(list => list._id === newListId);
-
-    fromList.cards = fromList.cards.filter(card => card._id !== cardId);
-    newList.cards.splice(newIndex, 0, updatedCard);
-
-    console.log(`Cartão ${cardId} movido com sucesso`);
-    this.$emit('board-updated', this.currentBoard); // Emitir evento para atualizar o estado no pai
+    this.$emit('board-updated', this.currentBoard); // Emite o evento para atualizar o estado no pai
   } catch (error) {
-    console.error('Erro ao mover o cartão:', error);
+    console.error('Erro ao reordenar listas:', error);
   }
 },
-
-
-  async moveList(listId, newIndex) {
-    try {
-      const token = localStorage.getItem('authToken');
-      const response = await fetch(`/api/lists/${listId}/move`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ newIndex })
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      // Atualizar o estado local do quadro
-      const list = this.currentBoard.lists.find(l => l._id === listId);
-      this.currentBoard.lists = this.currentBoard.lists.filter(l => l._id !== listId);
-      this.currentBoard.lists.splice(newIndex, 0, list);
-
-      this.$emit('board-updated', this.currentBoard); // Emitir evento para atualizar o estado no pai
-    } catch (error) {
-      console.error('Erro ao mover a lista:', error);
-    }
-  },
     toggleBoardsMenu() {
       this.showBoardsMenu = !this.showBoardsMenu;
     },
     logout() {
-    localStorage.removeItem('authToken');
-    window.location.href = '/login';
-  },
+      localStorage.removeItem('authToken');
+      window.location.href = '/login';
+    },
     toggleFavorite(boardId) {
       const board = this.boards.find(board => board._id === boardId);
       board.favorite = !board.favorite;
@@ -429,6 +399,8 @@ export default {
   }
 };
 </script>
+
+
 
 
 

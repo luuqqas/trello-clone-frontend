@@ -43,8 +43,6 @@ export default {
 };
 </script>
 
-
-
 <style scoped>
 .card {
   background-color: white;
@@ -80,5 +78,4 @@ export default {
   border-radius: 3px;
   box-sizing: border-box;
 }
-
 </style>
