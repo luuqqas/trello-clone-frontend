@@ -23,9 +23,40 @@
         </ul>
       </aside>
       <section id="board-view">
-        <div id="boards-container">
-          <div v-if="currentBoard" class="board">
-            <input type="text" v-model="currentBoard.title" class="board-title" @change="updateBoardTitle(currentBoard)">
+  <div id="boards-container">
+    <div 
+      v-if="currentBoard" 
+      class="board" 
+      :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }"
+    >
+      <!-- Título do Quadro -->
+      <input 
+        type="text" 
+        v-model="currentBoard.title" 
+        class="board-title" 
+        :style="{ color: currentBoard.textColor }"
+        @change="updateBoardTitle(currentBoard)"
+      >
+
+      <!-- Escolha de Cores -->
+      <div class="color-selectors">
+        <label>
+          Cor de Fundo:
+          <input 
+            type="color" 
+            v-model="currentBoard.backgroundColor" 
+            @change="updateBoardColors(currentBoard)"
+          >
+        </label>
+        <label>
+          Cor do Texto:
+          <input 
+            type="color" 
+            v-model="currentBoard.textColor" 
+            @change="updateBoardColors(currentBoard)"
+          >
+        </label>
+      </div>
             <div class="board-buttons">
               <button @click="addList" class="add-list">Adicionar Lista</button>
               <button @click="deleteBoard(currentBoard._id)" class="delete-board">Remover Quadro</button>
@@ -48,6 +79,7 @@
               >
                 <ListComponent
                   :list="list"
+                  :textColor="currentBoard.textColor" 
                   @move-card="moveCard"
                   @update-card-content="updateCardContent"
                   @update-list-title="updateListTitle"
@@ -218,6 +250,26 @@ export default {
         console.error('Erro ao atualizar título do quadro:', error);
       }
     },
+    
+    async updateBoardColors(board) {
+  try {
+    const token = this.authToken;
+    await axios.put(`/api/boards/${board._id}`, {
+      backgroundColor: board.backgroundColor,
+      textColor: board.textColor,
+    }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    this.$emit('board-updated', this.currentBoard);
+  } catch (error) {
+    console.error('Erro ao atualizar cores do quadro:', error);
+  }
+}
+
+,
     async updateListTitle(listId, title) {
       try {
         const token = this.authToken;

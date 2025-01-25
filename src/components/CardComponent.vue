@@ -5,14 +5,14 @@
     @dragstart="dragStart"
     @dragend="dragEnd"
   >
-    <textarea v-model="localContent" class="card-title" @input="updateContent"></textarea>
+    <textarea v-model="localContent" class="card-title" :style="{ color: textColor }" @input="updateContent"></textarea>
     <button @click="$emit('delete-card', card._id)" class="delete-card-icon">X</button>
   </div>
 </template>
 
 <script>
 export default {
-  props: ['card'],
+  props: ['card','textColor'],
   emits: ['delete-card', 'update-card-content', 'drag-end'], // Certifique-se de que os eventos estão definidos
   data() {
     return {

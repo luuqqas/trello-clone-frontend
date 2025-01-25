@@ -93,7 +93,6 @@ body {
     border-radius: 3px;
     font-size: 20px;
     text-align: center;
-    background-color: #005a8c;
     color: white;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     display: block;
@@ -209,6 +208,22 @@ body {
     height: 30px;
     border: none;
     cursor: pointer;
+  }
+
+  .color-selectors {
+    display: flex;
+    align-items: center;
+    gap: 16px; 
+  }
+
+  .color-selectors label {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    color: black; 
+  }
+  .color-selectors input[type="color"] {
+    margin-left: 8px;
   }
   
   #save-changes, #cancel-changes {
