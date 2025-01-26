@@ -112,6 +112,11 @@ body {
   .add-list:hover, .delete-board:hover {
     background-color: #519839;
   }
+  .main-content {
+    display: flex;
+    flex-direction: column;
+    margin-top: 20px; /* Adicionar margem para evitar sobreposição */
+  }
   
   .boards-menu {
     width: 250px;
@@ -119,7 +124,7 @@ body {
     color: white;
     position: fixed;
     height: 100%;
-    top: 0;
+    top: 80px; /* Adicionar margem para empurrar o conteúdo para baixo */
     left: 0;
     overflow-x: hidden;
     transform: translateX(-100%);
@@ -137,6 +142,7 @@ body {
     padding: 20px 0;
     font-size: 20px;
   }
+
   
   .boards-menu ul {
     list-style-type: none;
@@ -365,6 +371,14 @@ body {
     align-items: center;
     gap: 10px;
   }
+  .nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+  }
   
   
   .nav-button {
@@ -388,6 +402,11 @@ body {
   
   .logout-button:hover {
     background-color: #cc0000;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
   }
   
   .logo-title {
