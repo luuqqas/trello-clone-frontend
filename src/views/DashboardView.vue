@@ -23,10 +23,23 @@
         </ul>
       </aside>
       <section id="board-view">
-        <div id="boards-container">
-          <div v-if="currentBoard" class="board" :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }">
-            <input type="text" v-model="currentBoard.title" class="board-title" :style="{ color: currentBoard.textColor }" @change="updateBoardTitle(currentBoard)">
-            <div class="color-selectors">
+  <div id="boards-container">
+    <div 
+      v-if="currentBoard" 
+      class="board" 
+      :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }"
+    >
+      <!-- Título do Quadro -->
+      <input 
+        type="text" 
+        v-model="currentBoard.title" 
+        class="board-title" 
+        :style="{ color: currentBoard.textColor }"
+        @change="updateBoardTitle(currentBoard)"
+      >
+
+      <!-- Escolha de Cores -->
+      <div class="color-selectors">
         <label>
           Cor de Fundo:
           <input 
@@ -225,25 +238,23 @@ export default {
         console.error('Erro ao deletar lista:', error);
       }
     },
-
-async updateBoardTitle(board) {
-  try {
-    const token = this.authToken; // Certifique-se de que este token está correto
-    await axios.put(`/api/boards/${board._id}`, { title: board.title }, {
-      headers: {
-        'Authorization': `Bearer ${token}` // Corrigir a interpolação da string
+    async updateBoardTitle(board) {
+      try {
+        const token = this.authToken;
+        await axios.put(`/api/boards/${board._id}`, { title: board.title }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      } catch (error) {
+        console.error('Erro ao atualizar título do quadro:', error);
       }
-    });
-    console.log('Título atualizado com sucesso!');
-  } catch (error) {
-    console.error('Erro ao atualizar título do quadro:', error);
-  }
-},
-
+    },
+    
     async updateBoardColors(board) {
   try {
     const token = this.authToken;
-    await axios.put(`/api/boards/color/${board._id}`, {
+    await axios.put(`/api/boards/${board._id}`, {
       backgroundColor: board.backgroundColor,
       textColor: board.textColor,
     }, {
@@ -256,7 +267,9 @@ async updateBoardTitle(board) {
   } catch (error) {
     console.error('Erro ao atualizar cores do quadro:', error);
   }
-},
+}
+
+,
     async updateListTitle(listId, title) {
       try {
         const token = this.authToken;
@@ -293,29 +306,42 @@ async updateBoardTitle(board) {
         console.error('Erro ao adicionar cartão:', error);
       }
     },
-    async updateCardContent(cardId, newContent) {
-      try {
-        const token = this.authToken;
-        const response = await axios.put(`/api/cards/${cardId}`, { content: newContent }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
 
-        const updatedCard = response.data;
-        const targetCard = this.currentBoard.lists
-          .flatMap(list => list.cards)
-          .find(card => card._id === cardId);
+  async updateCardContent(cardId, newContent, file) {
+    console.log('Método updateCardContent chamado', { cardId, newContent, file });
+  try {
+    console.log(file);
+    const formData = new FormData();
+    formData.append('content', newContent);
+    console.log(file);
+    if (file) {
+      formData.append('file', file); // Adiciona o arquivo ao FormData
+    }
 
-        if (targetCard) {
-          targetCard.content = updatedCard.content;
-        }
-
-        this.$emit('board-updated', this.currentBoard);
-      } catch (error) {
-        console.error('Erro ao atualizar o conteúdo do cartão:', error);
+    const token = this.authToken;
+    const response = await axios.put(`/api/cards/${cardId}`, formData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data'
       }
-    },
+    });
+
+    const updatedCard = response.data;
+    const targetCard = this.currentBoard.lists
+      .flatMap(list => list.cards)
+      .find(card => card._id === cardId);
+
+    if (targetCard) {
+      targetCard.content = updatedCard.content;
+      targetCard.fileName = updatedCard.fileName; // Atualiza no front
+    }
+
+    this.$emit('board-updated', this.currentBoard);
+  } catch (error) {
+    console.error('Erro ao atualizar o conteúdo do cartão:', error);
+  }
+},
+
     async deleteCard(cardId) {
       try {
         const token = this.authToken;
@@ -335,7 +361,7 @@ async updateBoardTitle(board) {
       try {
         console.log(`Movendo cartão ${cardId} da lista ${fromListId} para ${newListId} na posição ${newIndex}`);
         const token = this.authToken;
-        const response = await axios.put(`/api/cards/move/${cardId}`, {
+        const response = await axios.put(`/api/cards/${cardId}/move`, {
           newListId, newIndex
         }, {
           headers: {

@@ -92,8 +92,8 @@ export default {
     deleteCard(cardId) {
       this.$emit('delete-card', cardId);
     },
-    updateCardContent(cardId, newContent) {
-      this.$emit('update-card-content', cardId, newContent);
+    updateCardContent(cardId, newContent, file) {
+      this.$emit('update-card-content', cardId, newContent, file);
     }
   }
 };
