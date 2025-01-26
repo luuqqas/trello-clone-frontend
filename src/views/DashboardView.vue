@@ -12,24 +12,33 @@
     </nav>
 
     <main>
-      <aside :class="['boards-menu', { active: showBoardsMenu }]">
-        <h2>Quadros</h2>
-        <ul id="boards-list">
-          <li v-for="board in boards" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
-            <span>{{ board.title }}</span>
-            <i class="fa fa-star favorite-icon" :class="{ favorite: board.favorite }" @click.stop="toggleFavorite(board._id)"></i>
-            <button @click.stop="deleteBoard(board._id)">Remover</button>
-          </li>
-        </ul>
-      </aside>
-      <section id="board-view">
-  <div id="boards-container">
-    <div 
+      <div class="main-content">
+        <aside :class="['boards-menu', { active: showBoardsMenu }]">
+          <h2>Meus Favoritos</h2>
+          <ul id="favorite-boards-list">
+            <li v-for="board in favoriteBoards" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
+              <span>{{ board.title }}</span>
+              <i class="fa fa-star favorite-icon" :class="{ favorite: board.favorite }" @click.stop="toggleFavorite(board._id)"></i>
+              <button @click.stop="deleteBoard(board._id)">Remover</button>
+            </li>
+          </ul>
+          <h2>Quadros</h2>
+          <ul id="boards-list">
+            <li v-for="board in boards" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
+              <span>{{ board.title }}</span>
+              <i class="fa fa-star favorite-icon" :class="{ favorite: board.favorite }" @click.stop="toggleFavorite(board._id)"></i>
+              <button @click.stop="deleteBoard(board._id)">Remover</button>
+            </li>
+          </ul>
+        </aside>
+        <section id="board-view">
+    <div id="boards-container">
+      <div 
       v-if="currentBoard" 
       class="board" 
       :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }"
     >
-      <!-- Título do Quadro -->
+        <!-- Título do Quadro -->
       <input 
         type="text" 
         v-model="currentBoard.title" 
@@ -57,52 +66,45 @@
           >
         </label>
       </div>
-            <div class="board-buttons">
-              <button @click="addList" class="add-list">Adicionar Lista</button>
-              <button @click="deleteBoard(currentBoard._id)" class="delete-board">Remover Quadro</button>
-            </div>
-            <div
-              class="lists-container"
-              @dragover.prevent="handleDragOverContainer"
-              @drop="handleDrop"
-            >
+              <div class="board-buttons">
+                <button @click="addList" class="add-list">Adicionar Lista</button>
+                <button @click="deleteBoard(currentBoard._id)" class="delete-board">Remover Quadro</button>
+              </div>
               <div
-                v-for="(list, index) in currentBoard.lists"
-                :key="list._id"
-                class="list-wrapper"
-                draggable="true"
-                @dragstart="handleDragStart(index)"
-                @dragenter="handleDragEnter(index)"
-                @dragover.prevent="handleDragOver"
-                @dragleave="handleDragLeave"
-                :class="{'drag-over': dragOverIndex === index}"
+                class="lists-container"
+                @dragover.prevent="handleDragOverContainer"
+                @drop="handleDrop"
               >
-                <ListComponent
-                  :list="list"
-                  :textColor="currentBoard.textColor" 
+                <div
+                  v-for="(list, index) in currentBoard.lists"
+                  :key="list._id"
+                  class="list-wrapper"
+                  draggable="true"
+                  @dragstart="handleDragStart(index)"
+                  @dragenter="handleDragEnter(index)"
+                  @dragover.prevent="handleDragOver"
+                  @dragleave="handleDragLeave"
+                  :class="{'drag-over': dragOverIndex === index}"
+                >
+                  <ListComponent
+                    :list="list"
+                    :textColor="currentBoard.textColor" 
                   @move-card="moveCard"
-                  @update-card-content="updateCardContent"
-                  @update-list-title="updateListTitle"
-                  @add-card="addCard"
-                  @delete-list="deleteList"
-                  @delete-card="deleteCard"
-                />
+                    @update-card-content="updateCardContent"
+                    @update-list-title="updateListTitle"
+                    @add-card="addCard"
+                    @delete-list="deleteList"
+                    @delete-card="deleteCard"
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
   </div>
 </template>
-
-
-
-
-
-
-
-
 
 
 <script>
@@ -124,7 +126,13 @@ export default {
   },
   components: {
     ListComponent,
+    
   },
+  computed: {
+  favoriteBoards() {
+    return this.boards.filter(board => board.favorite);
+  }
+},
   methods: {
     async fetchBoards() {
       try {
@@ -438,16 +446,29 @@ export default {
     console.error('Erro ao reordenar listas:', error);
   }
 },
+async toggleFavorite(boardId) {
+    try {
+      const token = this.authToken;
+      const response = await axios.put(`/api/boards/${boardId}/favorite`, {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const updatedBoard = response.data;
+      const boardIndex = this.boards.findIndex(board => board._id === boardId);
+      if (boardIndex !== -1) {
+        this.boards[boardIndex].favorite = updatedBoard.favorite;
+      }
+    } catch (error) {
+      console.error('Erro ao favoritar quadro:', error);
+    }
+  },
     toggleBoardsMenu() {
       this.showBoardsMenu = !this.showBoardsMenu;
     },
     logout() {
       localStorage.removeItem('authToken');
       window.location.href = '/login';
-    },
-    toggleFavorite(boardId) {
-      const board = this.boards.find(board => board._id === boardId);
-      board.favorite = !board.favorite;
     },
     handleScroll() {
       this.isScrolled = window.scrollY > 50;
