@@ -1,0 +1,105 @@
+nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #026aa7;
+    padding: 10px 20px;
+    position: fixed;
+    width: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  nav.scrolled {
+    background-color: #024a7f;
+  }
+  
+  .logo {
+    flex: 1;
+    margin-right: 10px;
+    text-align: left; /* Garantir que o título fique no canto esquerdo */
+  }
+  
+  .logo h1 {
+    color: #fff;
+    font-size: 2em; /* Aumentar o tamanho da fonte para chamar atenção */
+    font-weight: bold; /* Tornar o título mais destacado */
+    margin: 0;
+    transition: transform 0.3s ease-in-out;
+    animation: fadeIn 2s ease-in-out, bounce 2s ease-in-out infinite alternate;
+  }
+  
+  .nav-links {
+    display: flex;
+    flex: 2;
+    justify-content: flex-end; /* Alinhar os links à direita */
+    margin-right: 30px; /* Reduzir a margem à direita */
+  }
+  
+  
+  .nav-links a {
+    margin: 0 5px;
+    padding: 10px 10px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: 600;
+    transition: color 0.3s ease-in-out, transform 0.3s ease-in-out;
+  }
+  
+  .nav-links a:hover {
+    color: #ffab00;
+    transform: scale(1.1);
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  @keyframes bounce {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(10px);
+    }
+  }
+  
+  nav {
+    animation: slideIn 0.5s ease-in-out;
+  }
+  
+  /* Media queries para responsividade */
+  @media (max-width: 1024px) {
+    .nav-links {
+      flex-direction: row;
+      justify-content: center; /* Centralizar os links em telas menores */
+    }
+  
+    .nav-links a {
+      margin: 5px;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .nav-links {
+      flex-direction: column;
+      align-items: center;
+    }
+  
+    .nav-links a {
+      margin: 5px 0;
+      padding: 10px 20px;
+      font-size: 1em;
+    }
+  }
+  

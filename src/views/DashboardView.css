@@ -1,0 +1,411 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+  }
+  
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #026aa7;
+    color: white;
+    padding: 10px 20px;
+  }
+  
+  header h1 {
+    margin: 0;
+  }
+  
+  header button {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  
+  header button:hover {
+    background-color: #519839;
+  }
+  
+  #buttons-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  #show-boards {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+  }
+  
+  #show-boards:hover {
+    background-color: #519839;
+  }
+  
+  nav a {
+    color: #fff;
+    margin: 0 10px;
+    text-decoration: none;
+  }
+  
+  main {
+    display: flex;
+    padding: 20px;
+    padding-top: 80px; /* Adicione este padding-top para empurrar o conteúdo para baixo */
+  }
+  
+  .container {
+    max-width: 400px;
+    margin: auto;
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+  }
+  
+  #app {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  
+  .board {
+    background-color: #0079bf;
+    color: white;
+    padding: 10px;
+    margin: 10px 0;
+    border-radius: 5px;
+  }
+  
+  .board-title {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin: 10px auto;
+    border: none;
+    border-radius: 3px;
+    font-size: 20px;
+    text-align: center;
+    color: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    display: block;
+  }
+  
+  .add-list, .delete-board {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-right: 5px;
+  }
+  
+  .add-list:hover, .delete-board:hover {
+    background-color: #519839;
+  }
+  
+  .boards-menu {
+    width: 250px;
+    background-color: #026aa7;
+    color: white;
+    position: fixed;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow-x: hidden;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    font-family: 'Roboto', sans-serif;
+  }
+  
+  .boards-menu.active {
+    transform: translateX(0);
+  }
+  
+  .boards-menu h2 {
+    color: #fff;
+    text-align: center;
+    padding: 20px 0;
+    font-size: 20px;
+  }
+  
+  .boards-menu ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+  }
+  
+  .boards-menu ul li {
+    padding: 10px;
+    border-bottom: 1px solid #444;
+    transition: background-color 0.3s, transform 0.3s;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .boards-menu ul li:hover {
+    background-color: #4c9ed9;
+    transform: translateX(5px);
+  }
+  
+  .boards-menu ul li.active {
+    background-color: #1d78c1;
+  }
+  
+  .boards-menu ul li.active span {
+    color: #fff;
+  }
+  
+  .boards-menu ul li button {
+    margin-left: 0.5rem;
+    background: #ff4d4d;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+  }
+  
+  .boards-menu ul li button:hover {
+    background: #e60000;
+  }
+  
+  #edit-board {
+    background-color: #ff9800;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    display: none;
+  }
+  
+  #edit-board:hover {
+    background-color: #e68900;
+  }
+  
+  .edit-container {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .edit-container label {
+    font-size: 14px;
+    color: #333;
+  }
+  
+  .edit-container input[type="color"] {
+    width: 100px;
+    height: 30px;
+    border: none;
+    cursor: pointer;
+  }
+  
+  #save-changes, #cancel-changes {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 3px;
+  }
+
+  .color-selectors {
+    display: flex;
+    align-items: center;
+    gap: 16px; 
+  }
+
+  .color-selectors label {
+    display: flex;
+    align-items: center;
+    margin: 8px 0;
+    color: black; 
+  }
+  .color-selectors input[type="color"] {
+    margin-left: 8px;
+  }
+  
+  #save-changes:hover, #cancel-changes:hover {
+    background-color: #519839;
+  }
+  
+  #cancel-changes {
+    background-color: #d32f2f;
+  }
+  
+  #cancel-changes:hover {
+    background-color: #b71c1c;
+  }
+  
+  .favorite-icon {
+    color: #ccc; /* Cor padrão para não favoritos */
+    cursor: pointer;
+    margin-right: 10px; /* Espaçamento entre o ícone e o título */
+  }
+  
+  .favorite-icon.favorite {
+    color: #ff0; /* Cor dourada para favoritos */
+  }
+  
+  /* Estilos do cards.css */
+  
+  .card {
+    background-color: white;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 3px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Garante que o cartão fique dentro da lista */
+    position: relative;
+    box-sizing: border-box; /* Inclui padding e border na largura total */
+  }
+  
+  .card-title {
+    width: calc(100% - 40px); /* Ajusta a largura do título para evitar sobreposição */
+    padding: 10px;
+    border: none;
+    border-radius: 3px;
+    box-sizing: border-box; /* Garante que o padding não afete o layout */
+    margin-bottom: 10px; /* Adiciona espaço abaixo do título */
+    resize: none; /* Remove a opção de redimensionamento */
+    overflow: auto; /* Adiciona rolagem automática */
+    white-space: pre-wrap; /* Permite a quebra de linha */
+    word-wrap: break-word; /* Quebra palavras longas */
+    height: auto; /* Permite que a altura se ajuste conforme o conteúdo */
+    min-height: 40px; /* Define uma altura mínima para o campo */
+    max-height: 150px; /* Define uma altura máxima para o campo */
+  }
+  
+  .card-content {
+    margin-bottom: 10px;
+  }
+  
+  .card-dates {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    font-size: 10px;
+    color: #888;
+    text-align: right;
+  }
+  
+  .card-dates.fixed-dates {
+    color: #888 !important;
+  }
+  
+  .delete-card-icon {
+    position: absolute;
+    top: 10px; /* Move o botão para o topo do cartão */
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 5px;
+    color: #d32f2f;
+  }
+  
+  .delete-card-icon:hover {
+    color: #b71c1c;
+  }
+  
+  .placeholder {
+    background-color: #f0f0f0;
+    border: 2px dashed #ccc;
+    margin-bottom: 10px;
+    border-radius: 3px;
+  }
+  
+  /* Estilos do lists.css */
+  
+  .list {
+    background-color: #dfe1e6;
+    padding: 10px;
+    border-radius: 5px;
+    width: 250px; /* Define a largura da lista */
+    box-sizing: border-box; /* Garante que o padding e a borda sejam incluídos na largura total */
+    position: relative; /* Permite o posicionamento absoluto dos elementos dentro da lista */
+  }
+  
+  .list-title {
+    width: calc(100% - 20px); /* Ajusta a largura do título para evitar sobreposição */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: none;
+    border-radius: 3px;
+    box-sizing: border-box; /* Garante que o padding não afete o layout */
+    overflow: auto; /* Adiciona rolagem automática */
+    white-space: pre-wrap; /* Permite a quebra de linha */
+    word-wrap: break-word; /* Quebra palavras longas */
+  }
+  
+  .add-card, .delete-list {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 3px;
+    margin-right: 5px;
+  }
+  
+  .add-card:hover, .delete-list:hover {
+    background-color: #519839;
+    margin-right: 5px;
+}
+
+.lists-container {
+  display: flex;
+  gap: 10px;
+}
+
+.logo-title {
+    color: white; /* Garantir a cor correta */
+    font-size: 2em; /* Tamanho apropriado */
+  }
+
+  
+.nav-links {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  
+  .nav-button {
+    background-color: #5aac44;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    margin-left: 10px;
+    border-radius: 3px;
+    transition: background-color 0.3s ease-in-out;
+  }
+  
+  .nav-button:hover {
+    background-color: #519839;
+  }
+  
+  .logout-button {
+    background-color: #ff0000;
+  }
+  
+  .logout-button:hover {
+    background-color: #cc0000;
+  }
+  
+  .logo-title {
+    color: white; /* Garantir a cor correta */
+    font-size: 2em; /* Tamanho apropriado */
+  }
