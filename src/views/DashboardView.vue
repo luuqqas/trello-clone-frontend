@@ -7,6 +7,7 @@
       <div class="nav-links">
         <button @click="createBoard" class="nav-button">Criar Quadro</button>
         <button @click="toggleBoardsMenu" class="nav-button">Mostrar Quadros</button>
+        <button v-if="currentBoard" @click="toggleShareBoard" class="nav-button">Compartilhar Quadro</button>
         <button class="nav-button logout-button" @click="logout">Logout</button>
       </div>
     </nav>
@@ -22,7 +23,7 @@
               <button @click.stop="deleteBoard(board._id)">Remover</button>
             </li>
           </ul>
-          <h2>Quadros</h2>
+          <h2>Meus Quadros</h2>
           <ul id="boards-list">
             <li v-for="board in boards" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
               <span>{{ board.title }}</span>
@@ -30,71 +31,80 @@
               <button @click.stop="deleteBoard(board._id)">Remover</button>
             </li>
           </ul>
+          <h2>Quadros Compartilhados</h2>
+          <ul id="shared-boards-list">
+            <li v-for="board in sharedBoards" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
+              <span>{{ board.title }}</span>
+              <button @click.stop="removeSharedBoard(board._id)">Remover Compartilhamento</button>
+            </li>
+          </ul>
+          <h2>Quadros Compartilhados Comigo</h2>
+          <ul id="boards-shared-with-me-list">
+            <li v-for="board in boardsSharedWithMe" :key="board._id" :id="`board-${board._id}`" @click="selectBoard(board)">
+              <span>{{ board.title }}</span>
+            </li>
+          </ul>
         </aside>
         <section id="board-view">
-    <div id="boards-container">
-      <div 
-      v-if="currentBoard" 
-      class="board" 
-      :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }"
-    >
-        <!-- Título do Quadro -->
-      <input 
-        type="text" 
-        v-model="currentBoard.title" 
-        class="board-title" 
-        :style="{ color: currentBoard.textColor }"
-        @change="updateBoardTitle(currentBoard)"
-      >
+          <div id="boards-container">
+            <div 
+              v-if="currentBoard" 
+              class="board" 
+              :style="{ backgroundColor: currentBoard.backgroundColor, color: currentBoard.textColor }"
+            >
+              <!-- Título do Quadro -->
+              <input 
+                type="text" 
+                v-model="currentBoard.title" 
+                class="board-title" 
+                :style="{ color: currentBoard.textColor }"
+                @change="updateBoardTitle(currentBoard)"
+              />
 
-      <!-- Escolha de Cores -->
-      <div class="color-selectors">
-        <label>
-          Cor de Fundo:
-          <input 
-            type="color" 
-            v-model="currentBoard.backgroundColor" 
-            @change="updateBoardColors(currentBoard)"
-          >
-        </label>
-        <label>
-          Cor do Texto:
-          <input 
-            type="color" 
-            v-model="currentBoard.textColor" 
-            @change="updateBoardColors(currentBoard)"
-          >
-        </label>
-      </div>
+              <!-- Escolha de Cores -->
+              <div class="color-selectors">
+                <label>
+                  Cor de Fundo:
+                  <input 
+                    type="color" 
+                    v-model="currentBoard.backgroundColor" 
+                    @change="updateBoardColors(currentBoard)"
+                  />
+                </label>
+                <label>
+                  Cor do Texto:
+                  <input 
+                    type="color" 
+                    v-model="currentBoard.textColor" 
+                    @change="updateBoardColors(currentBoard)"
+                  />
+                </label>
+              </div>
               <div class="board-buttons">
                 <button @click="addList" class="add-list">Adicionar Lista</button>
                 <button @click="deleteBoard(currentBoard._id)" class="delete-board">Remover Quadro</button>
               </div>
-              <div
-                class="lists-container"
-                @dragover.prevent="handleDragOverContainer"
-                @drop="handleDrop"
-              >
-                <div
-                  v-for="(list, index) in currentBoard.lists"
-                  :key="list._id"
-                  class="list-wrapper"
-                  draggable="true"
-                  @dragstart="handleDragStart(index)"
-                  @dragenter="handleDragEnter(index)"
-                  @dragover.prevent="handleDragOver"
-                  @dragleave="handleDragLeave"
+              <div class="lists-container" @dragover.prevent="handleDragOverContainer" @drop="handleDrop">
+                <div 
+                  v-for="(list, index) in currentBoard.lists" 
+                  :key="list._id" 
+                  class="list-wrapper" 
+                  draggable="true" 
+                  @dragstart="handleDragStart(index)" 
+                  @dragenter="handleDragEnter(index)" 
+                  @dragover.prevent="handleDragOver" 
+                  @dragleave="handleDragLeave" 
                   :class="{'drag-over': dragOverIndex === index}"
                 >
-                  <ListComponent
-                    :list="list"
+                  <ListComponent 
+                    :list="list" 
                     :textColor="currentBoard.textColor" 
-                  @move-card="moveCard"
-                    @update-card-content="updateCardContent"
-                    @update-list-title="updateListTitle"
-                    @add-card="addCard"
-                    @delete-list="deleteList"
-                    @delete-card="deleteCard"
+                    @move-card="moveCard" 
+                    @update-card-content="updateCardContent" 
+                    @update-list-title="updateListTitle" 
+                    @add-card="addCard" 
+                    @delete-list="deleteList" 
+                    @delete-card="deleteCard" 
                   />
                 </div>
               </div>
@@ -102,18 +112,23 @@
           </div>
         </section>
       </div>
+      <ShareBoardModal v-if="showShareBoardModal" :show="showShareBoardModal" :boardId="currentBoard._id" @close="toggleShareBoard" @shared="handleBoardShared" />
     </main>
   </div>
 </template>
 
 
+
+
 <script>
 import ListComponent from '../components/ListComponent.vue';
+import ShareBoardModal from '@/components/ShareBoardModal.vue';
 import axios from 'axios';
 
 export default {
   data() {
     return {
+      showShareBoardModal: false,
       showBoardsMenu: false,
       newBoard: { title: '' },
       boards: [],
@@ -126,14 +141,58 @@ export default {
   },
   components: {
     ListComponent,
+    ShareBoardModal,
     
   },
   computed: {
   favoriteBoards() {
     return this.boards.filter(board => board.favorite);
+  },
+  sharedBoards() {
+    return this.boards.filter(board => board.sharedWith && board.sharedWith.length > 0);
+  },
+  boardsSharedWithMe() {
+    return this.boardsSharedWithMeData; // Assumindo que você irá buscar esses dados do backend
   }
 },
   methods: {
+    async mounted() {
+  await this.fetchBoards();
+  await this.fetchBoardsSharedWithMe();
+},
+    
+    async fetchBoardsSharedWithMe() {
+    try {
+      const response = await axios.get('/api/boards/shared-with-me', {
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`
+        }
+      });
+      this.boardsSharedWithMeData = response.data;
+    } catch (error) {
+      console.error('Erro ao buscar quadros compartilhados com você:', error);
+    }
+  },
+    async removeSharedBoard(boardId) {
+    try {
+      await axios.put(`/api/boards/${boardId}/remove-share`, {}, {
+        headers: {
+          'Authorization': `Bearer ${this.authToken}`
+        }
+      });
+      // Atualize a lista de quadros
+      this.fetchBoards();
+    } catch (error) {
+      console.error('Erro ao remover compartilhamento do quadro:', error);
+    }
+  },
+    toggleShareBoard() {
+    this.showShareBoardModal = !this.showShareBoardModal;
+  },
+  handleBoardShared(sharedData) {
+    console.log('Quadro compartilhado com sucesso:', sharedData);
+    this.showShareBoardModal = false;
+  },
     async fetchBoards() {
       try {
         const token = this.authToken;
