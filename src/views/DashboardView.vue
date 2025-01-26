@@ -259,25 +259,28 @@ export default {
       }
     },
     
+    toggleEditBoard() {
+      this.showEditBoard = !this.showEditBoard;
+    },
     async updateBoardColors(board) {
-  try {
-    const token = this.authToken;
-    await axios.put(`/api/boards/${board._id}`, {
-      backgroundColor: board.backgroundColor,
-      textColor: board.textColor,
-    }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+      try {
+        const token = this.authToken;
+        const response = await axios.put(`/api/boards/color/${board._id}`, {
+          backgroundColor: board.backgroundColor,
+          textColor: board.textColor
+        }, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
 
-    this.$emit('board-updated', this.currentBoard);
-  } catch (error) {
-    console.error('Erro ao atualizar cores do quadro:', error);
-  }
-}
-
-,
+        this.currentBoard.backgroundColor = response.data.backgroundColor;
+        this.currentBoard.textColor = response.data.textColor;
+        this.$emit('board-updated', this.currentBoard);
+      } catch (error) {
+        console.error('Erro ao atualizar cores do quadro:', error);
+      }
+    },
     async updateListTitle(listId, title) {
       try {
         const token = this.authToken;
@@ -315,40 +318,39 @@ export default {
       }
     },
 
-  async updateCardContent(cardId, newContent, file) {
-    console.log('Método updateCardContent chamado', { cardId, newContent, file });
-  try {
-    console.log(file);
-    const formData = new FormData();
-    formData.append('content', newContent);
-    console.log(file);
-    if (file) {
-      formData.append('file', file); // Adiciona o arquivo ao FormData
-    }
+    async updateCardContent(cardId, newContent, file) {
+      console.log('Método updateCardContent chamado', { cardId, newContent, file });
+      try {
+        const formData = new FormData();
+        formData.append('content', newContent);
+        if (file) {
+          formData.append('file', file); // Adiciona o arquivo ao FormData
+        }
 
-    const token = this.authToken;
-    const response = await axios.put(`/api/cards/${cardId}`, formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data'
+        const token = this.authToken;
+        const response = await axios.put(`/api/cards/${cardId}`, formData, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+
+        const updatedCard = response.data;
+        const targetCard = this.currentBoard.lists
+          .flatMap(list => list.cards)
+          .find(card => card._id === cardId);
+
+        if (targetCard) {
+          targetCard.content = updatedCard.content;
+          targetCard.fileName = updatedCard.fileName; // Atualiza no front
+          targetCard.updatedAt = updatedCard.updatedAt; // Atualiza a data de modificação no front
+        }
+
+        this.$emit('board-updated', this.currentBoard);
+      } catch (error) {
+        console.error('Erro ao atualizar o conteúdo do cartão:', error);
       }
-    });
-
-    const updatedCard = response.data;
-    const targetCard = this.currentBoard.lists
-      .flatMap(list => list.cards)
-      .find(card => card._id === cardId);
-
-    if (targetCard) {
-      targetCard.content = updatedCard.content;
-      targetCard.fileName = updatedCard.fileName; // Atualiza no front
-    }
-
-    this.$emit('board-updated', this.currentBoard);
-  } catch (error) {
-    console.error('Erro ao atualizar o conteúdo do cartão:', error);
-  }
-},
+    },
 
     async deleteCard(cardId) {
       try {
