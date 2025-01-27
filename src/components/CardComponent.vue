@@ -15,6 +15,7 @@
       @change="handleFileUpload" 
       class="hidden-file-input"
     />    
+    <button v-if="fileUrl" @click="openFile" class="view-file-button">Visualizar PDF</button>
     <button @click="$emit('delete-card', card._id)" class="delete-card-icon">X</button>
   </div>
 </template>
@@ -26,7 +27,10 @@ export default {
   data() {
     return {
       localContent: this.card.content, // Use um estado local para o conteúdo do cartão
-      file: null // Variável para armazenar o arquivo PDF
+      authToken: localStorage.getItem('authToken'),
+      file: null,
+      fileName: this.card.fileName || null,
+      fileUrl: this.card.file ? `/api/cards/${this.card._id}/file` : null
     };
   },
   watch: {
@@ -56,7 +60,37 @@ export default {
     handleFileUpload(event) {
       this.file = event.target.files[0]; // Armazena o arquivo PDF selecionado
       this.updateContent();
-    }
+    },
+    openFile() {
+    console.log('Card ID:', this.card._id);
+    console.log('Arquivo exibido:', this.fileUrl);
+    console.log('Token utilizado:', this.authToken);
+    const token = this.authToken;
+    if (!token) {
+    console.error('Token não encontrado');
+    return;
+  }
+
+    fetch(this.fileUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}` 
+      }
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error('Erro ao acessar o arquivo');
+        }
+        return response.blob();
+      })
+      .then((blob) => {
+        const url = window.URL.createObjectURL(blob);
+        window.open(url, '_blank'); // Abre o PDF em uma nova aba
+      })
+      .catch((error) => {
+        console.error('Erro ao abrir arquivo:', error);
+      });
+  }
   }
 };
 </script>
@@ -90,6 +124,19 @@ export default {
 
 .hidden-file-input {
   display: none; /* Input completamente escondido */
+}
+
+.view-file-button {
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 10px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+.view-file-button:hover {
+  background-color: #218838;
 }
 
 .file-title {
