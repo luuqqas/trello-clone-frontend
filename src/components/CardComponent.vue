@@ -17,16 +17,23 @@
     />    
     <button v-if="fileUrl" @click="openFile" class="view-file-button">Visualizar PDF</button>
     <button @click="$emit('delete-card', card._id)" class="delete-card-icon">X</button>
+    <div class="card-dates">
+      <p class="created-at">Criado em: {{ formatDate(card.createdAt) }}</p>
+      <p class="updated-at">Última modificação: {{ formatDate(card.updatedAt) }}</p>
+    </div>
   </div>
 </template>
 
+
+
+
 <script>
 export default {
-  props: ['card','textColor'],
-  emits: ['delete-card', 'update-card-content', 'drag-end'], // Certifique-se de que os eventos estão definidos
+  props: ['card', 'textColor'],
+  emits: ['delete-card', 'update-card-content', 'drag-end'],
   data() {
     return {
-      localContent: this.card.content, // Use um estado local para o conteúdo do cartão
+      localContent: this.card.content,
       authToken: localStorage.getItem('authToken'),
       file: null,
       fileName: this.card.fileName || null,
@@ -36,7 +43,7 @@ export default {
   watch: {
     card: {
       handler(newCard) {
-        this.localContent = newCard.content; // Atualize o estado local quando a prop mudar
+        this.localContent = newCard.content; 
       },
       deep: true
     }
@@ -44,22 +51,31 @@ export default {
   methods: {
     dragStart(event) {
       event.dataTransfer.setData('cardId', this.card._id);
-      event.dataTransfer.setData('fromListId', this.card.list); // Adiciona o ID da lista de origem aos dados de transferência
+      event.dataTransfer.setData('fromListId', this.card.list); 
       event.dataTransfer.effectAllowed = 'move';
     },
     dragEnd() {
       this.$emit('drag-end');
     },
     updateContent() {
-      console.log('Evento update-card-content emitido');
-      this.$emit('update-card-content', this.card._id, this.localContent, this.file); // Emita o evento para atualizar o conteúdo no componente pai
+      this.$emit('update-card-content', this.card._id, this.localContent, this.file);
     },
     triggerFileUpload() {
       this.$refs.fileInput.click();
     },
     handleFileUpload(event) {
-      this.file = event.target.files[0]; // Armazena o arquivo PDF selecionado
+      this.file = event.target.files[0]; 
       this.updateContent();
+    },
+    formatDate(date) {
+      if (!date) return '';
+      const d = new Date(date);
+      const day = d.getDate().toString().padStart(2, '0');
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = d.getHours().toString().padStart(2, '0');
+      const minutes = d.getMinutes().toString().padStart(2, '0');
+      return `${day}/${month}/${year} ${hours}:${minutes}`;
     },
     openFile() {
     console.log('Card ID:', this.card._id);
@@ -94,6 +110,12 @@ export default {
   }
 };
 </script>
+
+
+
+
+
+
 
 <style scoped>
 .card {
@@ -174,4 +196,16 @@ export default {
   border-radius: 3px;
   box-sizing: border-box;
 }
+
+.card-dates {
+  font-size: 0.8rem; /* Tamanho menor para ser sutil */
+  color: #888; /* Cor sutil */
+  text-align: left;
+  margin-top: 10px; /* Espaçamento acima das datas */
+}
+
+.card-dates p {
+  margin: 2px 0; /* Margem mínima para ser sutil */
+}
 </style>
+

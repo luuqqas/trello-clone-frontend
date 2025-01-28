@@ -61,45 +61,29 @@ export default {
     },
   },
   methods: {
-  handleDragStart(index) {
-    this.draggedListIndex = index;
-  },
-  handleDragEnter(index) {
-    if (index !== this.draggedListIndex) {
-      this.dragOverIndex = index;
-    }
-  },
-  handleDragLeave() {
-    this.dragOverIndex = null;
-  },
-  handleDragOver(event) {
-    event.preventDefault();
-  },
-  async handleDrop() {
-    if (this.dragOverIndex !== null && this.dragOverIndex !== this.draggedListIndex) {
-      const lists = this.localBoard.lists;
-      const draggedList = lists[this.draggedListIndex];
-      lists.splice(this.draggedListIndex, 1);
-      lists.splice(this.dragOverIndex, 0, draggedList);
-    }
-    this.draggedListIndex = null;
-    this.dragOverIndex = null;
-
-    try {
-      const listsOrder = this.localBoard.lists.map(list => list._id);
-      await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder });
-      this.$emit('board-updated', this.localBoard);
-    } catch (error) {
-      console.error('Erro ao reordenar listas:', error);
-    }
-  },
-  async handleDropContainer() {
-    if (this.draggedListIndex !== null) {
-      const lists = this.localBoard.lists;
-      const draggedList = lists[this.draggedListIndex];
-      lists.splice(this.draggedListIndex, 1);
-      lists.push(draggedList);
+    handleDragStart(index) {
+      this.draggedListIndex = index;
+    },
+    handleDragEnter(index) {
+      if (index !== this.draggedListIndex) {
+        this.dragOverIndex = index;
+      }
+    },
+    handleDragLeave() {
+      this.dragOverIndex = null;
+    },
+    handleDragOver(event) {
+      event.preventDefault();
+    },
+    async handleDrop() {
+      if (this.draggedListIndex !== null && this.dragOverIndex !== this.draggedListIndex) {
+        const lists = this.localBoard.lists;
+        const draggedList = lists[this.draggedListIndex];
+        lists.splice(this.draggedListIndex, 1);
+        lists.splice(this.dragOverIndex, 0, draggedList);
+      }
       this.draggedListIndex = null;
+      this.dragOverIndex = null;
 
       try {
         const listsOrder = this.localBoard.lists.map(list => list._id);
@@ -108,74 +92,124 @@ export default {
       } catch (error) {
         console.error('Erro ao reordenar listas:', error);
       }
-    }
-  },
-  handleMoveCard(cardId, newListId, fromListId, newIndex) {
-    const fromList = this.localBoard.lists.find(list => list._id === fromListId);
-    const toList = this.localBoard.lists.find(list => list._id === newListId);
+    },
+    async handleDropContainer() {
+      if (this.draggedListIndex !== null) {
+        const lists = this.localBoard.lists;
+        const draggedList = lists[this.draggedListIndex];
+        lists.splice(this.draggedListIndex, 1);
+        lists.push(draggedList);
+        this.draggedListIndex = null;
 
-    if (fromList && toList) {
-      const cardIndex = fromList.cards.findIndex(card => card._id === cardId);
-
-      if (cardIndex !== -1) {
-        const [card] = fromList.cards.splice(cardIndex, 1);
-
-        // Evita adicionar duplicatas
-        const existingCardIndex = toList.cards.findIndex(existingCard => existingCard._id === cardId);
-        if (existingCardIndex === -1) {
-          if (newIndex === null || newIndex >= toList.cards.length) {
-            toList.cards.push(card); // Adiciona ao final da lista
-          } else {
-            toList.cards.splice(newIndex, 0, card); // Adiciona na posição especificada
-          }
+        try {
+          const listsOrder = this.localBoard.lists.map(list => list._id);
+          await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder });
+          this.$emit('board-updated', this.localBoard);
+        } catch (error) {
+          console.error('Erro ao reordenar listas:', error);
         }
       }
-    }
-    this.$emit('board-updated', this.localBoard); // Assegura que o estado é atualizado
-  },
-  handleUpdateCardContent(cardId, newContent) {
-    const listIndex = this.localBoard.lists.findIndex(list => list.cards.some(card => card._id === cardId));
-    if (listIndex !== -1) {
-      const card = this.localBoard.lists[listIndex].cards.find(card => card._id === cardId);
+    },
+    async handleMoveCard(cardId, newListId, fromListId, newIndex) {
+      const fromList = this.localBoard.lists.find(list => list._id === fromListId);
+      const toList = this.localBoard.lists.find(list => list._id === newListId);
+
+      if (fromList && toList) {
+        const cardIndex = fromList.cards.findIndex(card => card._id === cardId);
+
+        if (cardIndex !== -1) {
+          const [card] = fromList.cards.splice(cardIndex, 1);
+
+          // Evita adicionar duplicatas
+          const existingCardIndex = toList.cards.findIndex(existingCard => existingCard._id === cardId);
+          if (existingCardIndex === -1) {
+            if (newIndex === null || newIndex >= toList.cards.length) {
+              toList.cards.push(card); // Adiciona ao final da lista
+            } else {
+              toList.cards.splice(newIndex, 0, card); // Adiciona na posição especificada
+            }
+          }
+
+          // Atualizar a data de modificação no frontend
+          card.updatedAt = new Date();
+
+          // Atualizar a data de modificação no backend
+          await axios.put(`/api/cards/${cardId}/move`, { newListId, newIndex }, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+          });
+        }
+      }
+
+      this.$emit('board-updated', this.localBoard); // Assegura que o estado é atualizado
+    },
+    async handleUpdateCardContent(cardId, newContent, file) {
+      const card = this.localBoard.lists
+        .flatMap(list => list.cards)
+        .find(card => card._id === cardId);
+
       if (card) {
         card.content = newContent;
+        const updatedAtFrontend = new Date(); // Data de modificação no frontend
+
+        if (file) {
+          const formData = new FormData();
+          formData.append('file', file);
+          formData.append('content', newContent);
+
+          await axios.put(`/api/cards/${cardId}`, formData, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+              'Content-Type': 'multipart/form-data'
+            }
+          }).then(() => {
+            card.fileName = file.name;
+            card.updatedAt = updatedAtFrontend; // Atualiza a data de modificação no frontend com a data exata
+            this.$emit('board-updated', this.localBoard); // Atualiza o estado no componente pai
+          }).catch(error => {
+            console.error('Erro ao atualizar cartão:', error);
+          });
+        } else {
+          await axios.put(`/api/cards/${cardId}`, { content: newContent }, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
+          }).then(() => {
+            card.updatedAt = updatedAtFrontend; // Atualiza a data de modificação no frontend com a data exata
+            this.$emit('board-updated', this.localBoard); // Atualiza o estado no componente pai
+          }).catch(error => {
+            console.error('Erro ao atualizar cartão:', error);
+          });
+        }
+      }
+    },
+    async toggleFavorite() {
+      try {
+        const response = await axios.put(`/api/boards/${this.localBoard._id}/favorite`, {}, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        this.localBoard.favorite = response.data.favorite;
+        this.$emit('board-updated', this.localBoard);
+      } catch (error) {
+        console.error('Erro ao favoritar quadro:', error);
+      }
+    },
+    async handleDeleteBoard(boardId) {
+      try {
+        await axios.delete(`/api/boards/${boardId}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          }
+        });
+        this.$emit('board-deleted', boardId);
+      } catch (error) {
+        console.error('Erro ao remover quadro:', error);
       }
     }
-    this.$emit('board-updated', this.localBoard); // Assegura que o estado é atualizado
-  },
-}
-
-
-
+  }
 };
 </script>
 
-
-
-
-
-
-<style scoped>
-h2 {
-  color: #555;
-  font-family: Arial, sans-serif;
-}
-
-.lists-container {
-  border: 2px dashed transparent; /* Inicialmente transparente */
-  padding: 10px;
-  min-height: 100px; /* Ajuste conforme necessário */
-}
-
-.lists-container.drag-over {
-  border: 2px dashed #007bff; /* Cor da borda quando a lista está sendo arrastada sobre */
-}
-
-.list-wrapper {
-  margin-bottom: 10px;
-}
-
-.drag-over {
-  border: 2px dashed #007bff; /* Ajuste a cor e o estilo conforme necessário */
-}
-</style>
