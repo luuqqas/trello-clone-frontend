@@ -306,6 +306,10 @@ export default {
       }
     },
     async updateBoardTitle(board) {
+      if (board.title.trim() === '') {
+        alert('O título não pode ser apenas espaços em branco.');
+        return;
+      }
       try {
         const token = this.authToken;
         await axios.put(`/api/boards/${board._id}`, { title: board.title }, {
@@ -341,6 +345,10 @@ export default {
       }
     },
     async updateListTitle(listId, title) {
+      if (title.trim() === '') {
+        alert('O título não pode ser apenas espaços em branco.');
+        return;
+      }
       try {
         const token = this.authToken;
         await axios.put(`/api/lists/${listId}`, { title }, {
@@ -378,6 +386,10 @@ export default {
     },
 
     async updateCardContent(cardId, newContent, file) {
+      if (!newContent.trim()) {
+    alert('O cartão não pode estar vazio ou conter apenas espaços em branco.');
+    return;
+    }
       console.log('Método updateCardContent chamado', { cardId, newContent, file });
       try {
         const formData = new FormData();
