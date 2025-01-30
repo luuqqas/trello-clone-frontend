@@ -9,7 +9,7 @@
         <button @click="toggleBoardsMenu" class="nav-button">Mostrar Quadros</button>
         <button v-if="currentBoard" @click="toggleShareBoard" class="nav-button">Compartilhar Quadro</button>
         <span v-if="currentBoard && currentPermission && !isOwner" class="permission-indicator">
-          <span :class="currentPermission">{{ currentPermission === 'edit' ? 'Editar' : 'Visualizar' }}</span>
+          <span :class="currentPermission">Permissão: {{ currentPermission === 'edit' ? 'Editar' : 'Visualizar' }}</span>
         </span>
         <button class="nav-button logout-button" @click="logout">Logout</button>
       </div>
@@ -128,6 +128,7 @@
     </main>
   </div>
 </template>
+
 
 
 
@@ -354,102 +355,118 @@ export default {
     },
 
     async addList() {
-      try {
-        const token = this.authToken;
-        const response = await axios.post('/api/lists', {
-          title: 'Nova Lista',
-          boardId: this.currentBoard._id
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const list = response.data;
-        this.currentBoard.lists.push(list);
-      } catch (error) {
-        console.error('Erro ao adicionar lista:', error);
-      }
-    },
-
-    async deleteBoard(boardId) {
-      try {
-        const token = this.authToken;
-        if (!token) {
-          throw new Error('Token de autenticação não encontrado');
-        }
-        await axios.delete(`/api/boards/delete/${boardId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        this.boards = this.boards.filter(board => board._id !== boardId);
-        if (this.currentBoard && this.currentBoard._id === boardId) {
-          this.currentBoard = null;
-          localStorage.removeItem('currentBoardId');
-        }
-      } catch (error) {
-        console.error('Erro ao remover quadro:', error);
-      }
-    },
-
-    async deleteList(listId) {
-      try {
-        const token = this.authToken;
-        await axios.delete(`/api/lists/${listId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        this.currentBoard.lists = this.currentBoard.lists.filter(list => list._id !== listId);
-      } catch (error) {
-        console.error('Erro ao deletar lista:', error);
-      }
-    },
-    async updateBoardColors(board) {
-  try {
-    const token = this.authToken;
-    const response = await axios.put(`/api/boards/color/${board._id}`, {
-      backgroundColor: board.backgroundColor,
-      textColor: board.textColor
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    this.currentBoard.backgroundColor = response.data.backgroundColor;
-    this.currentBoard.textColor = response.data.textColor;
-    this.$emit('board-updated', this.currentBoard);
-  } catch (error) {
-    console.error('Erro ao atualizar cores do quadro:', error);
-  }
-},
-async updateBoardTitle(boardId, newTitle) {
-  if (!newTitle || typeof newTitle !== 'string' || typeof newTitle.trim !== 'function') {
-    console.error('Título inválido:', newTitle);
-    return;
-  }
-
-  try {
-    const token = this.authToken;
-    if (!token) {
-      throw new Error('Token de autenticação não encontrado');
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
     }
+    try {
+      const token = this.authToken;
+      const response = await axios.post('/api/lists', {
+        title: 'Nova Lista',
+        boardId: this.currentBoard._id
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const list = response.data;
+      this.currentBoard.lists.push(list);
+    } catch (error) {
+      console.error('Erro ao adicionar lista:', error);
+    }
+  },
 
-    const response = await axios.put(`/api/boards/${boardId}`, { title: newTitle.trim() }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+  async deleteBoard(boardId) {
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado');
       }
-    });
+      await axios.delete(`/api/boards/delete/${boardId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      this.boards = this.boards.filter(board => board._id !== boardId);
+      if (this.currentBoard && this.currentBoard._id === boardId) {
+        this.currentBoard = null;
+        localStorage.removeItem('currentBoardId');
+      }
+    } catch (error) {
+      console.error('Erro ao remover quadro:', error);
+    }
+  },
 
-    // Atualizar o título do quadro no frontend
-    const updatedBoard = response.data.board;
-    this.currentBoard.title = updatedBoard.title;
-    console.log('Título do quadro atualizado com sucesso');
-  } catch (error) {
-    console.error('Erro ao atualizar o título do quadro:', error);
-  }
-},
+  async deleteList(listId) {
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      await axios.delete(`/api/lists/${listId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      this.currentBoard.lists = this.currentBoard.lists.filter(list => list._id !== listId);
+    } catch (error) {
+      console.error('Erro ao deletar lista:', error);
+    }
+  },
+  
+    async updateBoardColors(board) {
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      const response = await axios.put(`/api/boards/color/${board._id}`, {
+        backgroundColor: board.backgroundColor,
+        textColor: board.textColor
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      this.currentBoard.backgroundColor = response.data.backgroundColor;
+      this.currentBoard.textColor = response.data.textColor;
+      this.$emit('board-updated', this.currentBoard);
+    } catch (error) {
+      console.error('Erro ao atualizar cores do quadro:', error);
+    }
+  },
+
+async updateBoardTitle(boardId, newTitle) {
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    if (!newTitle || typeof newTitle !== 'string' || typeof newTitle.trim !== 'function') {
+      console.error('Título inválido:', newTitle);
+      return;
+    }
+    try {
+      const token = this.authToken;
+      if (!token) {
+        throw new Error('Token de autenticação não encontrado');
+      }
+      const response = await axios.put(`/api/boards/${boardId}`, { title: newTitle.trim() }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      this.currentBoard.title = response.data.board.title;
+      console.log('Título do quadro atualizado com sucesso');
+    } catch (error) {
+      console.error('Erro ao atualizar o título do quadro:', error);
+    }
+  },
 
     async updateListTitle(listId, title) {
       if (title.trim() === '') {
@@ -473,25 +490,30 @@ async updateBoardTitle(boardId, newTitle) {
     },
 
     async addCard(listId) {
-      try {
-        const token = this.authToken;
-        const response = await axios.post('/api/cards', {
-          content: 'Novo Cartão',
-          listId
-        }, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const card = response.data;
-        const list = this.currentBoard.lists.find(list => list._id === listId);
-        if (list) {
-          list.cards.push(card);
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      const response = await axios.post('/api/cards', {
+        content: 'Novo Cartão',
+        listId
+      }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
         }
-      } catch (error) {
-        console.error('Erro ao adicionar cartão:', error);
+      });
+      const card = response.data;
+      const list = this.currentBoard.lists.find(list => list._id === listId);
+      if (list) {
+        list.cards.push(card);
       }
-    },
+    } catch (error) {
+      console.error('Erro ao adicionar cartão:', error);
+    }
+  },
+
 
     async updateCardContent(cardId, newContent, file) {
   if (!newContent.trim()) {
@@ -550,50 +572,47 @@ async deleteCard(cardId) {
 },
 
 async moveCard(cardId, newListId, fromListId, newIndex) {
-  try {
-    console.log(`Movendo cartão ${cardId} da lista ${fromListId} para ${newListId} na posição ${newIndex}`);
-    const token = this.authToken;
-    const response = await axios.put(`/api/cards/${cardId}/move`, {
-      newListId, newIndex
-    }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    const updatedCard = response.data;
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      await axios.put(`/api/cards/${cardId}/move`, { newListId, newIndex }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const updatedCard = this.currentBoard.lists.find(list => list._id === fromListId).cards.splice(newIndex, 1)[0];
+      this.currentBoard.lists.find(list => list._id === newListId).cards.splice(newIndex, 0, updatedCard);
+    } catch (error) {
+      console.error('Erro ao mover cartão:', error);
+    }
+  },
+  async moveList(listId, newIndex) {
+    if (this.currentPermission !== 'edit') {
+      alert('Você só tem permissão para visualizar');
+      return;
+    }
+    try {
+      const token = this.authToken;
+      await axios.put(`/api/lists/${listId}/move`, { newIndex }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
-    const fromList = this.currentBoard.lists.find(list => list._id === fromListId);
-    const newList = this.currentBoard.lists.find(list => list._id === newListId);
+      const list = this.currentBoard.lists.find(l => l._id === listId);
+      this.currentBoard.lists = this.currentBoard.lists.filter(l => l._id !== listId);
+      this.currentBoard.lists.splice(newIndex, 0, list);
 
-    fromList.cards = fromList.cards.filter(card => card._id !== cardId);
-    newList.cards.splice(newIndex, 0, updatedCard);
+      this.$emit('board-updated', this.currentBoard);
+      console.log(`Lista ${listId} movida com sucesso`);
+    } catch (error) {
+      console.error('Erro ao mover a lista:', error);
+    }
+  },
 
-    console.log(`Cartão ${cardId} movido com sucesso`);
-    this.$emit('board-updated', this.currentBoard);
-  } catch (error) {
-    console.error('Erro ao mover o cartão:', error);
-  }
-},
-async moveList(listId, newIndex) {
-  try {
-    const token = localStorage.getItem('authToken');
-    await axios.put(`/api/lists/${listId}/move`, { newIndex }, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-
-    const list = this.currentBoard.lists.find(l => l._id === listId);
-    this.currentBoard.lists = this.currentBoard.lists.filter(l => l._id !== listId);
-    this.currentBoard.lists.splice(newIndex, 0, list);
-
-    this.$emit('board-updated', this.currentBoard);
-    console.log(`Lista ${listId} movida com sucesso`);
-  } catch (error) {
-    console.error('Erro ao mover a lista:', error);
-  }
-}
-,
 async toggleFavorite(boardId) {
   try {
     const token = this.authToken;
