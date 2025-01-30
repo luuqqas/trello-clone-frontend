@@ -7,7 +7,7 @@
     @dragover.prevent
     @drop="drop"
   >
-    <input type="text" v-model="localList.title" class="list-title" :style="{ color: textColor }" @change="updateListTitle(localList)">
+    <input type="text" v-model="localList.title" class="list-title" :style="{ color: textColor }" @change="updateListTitle">
     <div class="list-buttons">
       <button @click="addCard" class="add-card">Adicionar Cartão</button>
       <button @click="deleteList" class="delete-list">Remover Lista</button>
@@ -29,9 +29,9 @@
 import CardComponent from './CardComponent.vue';
 
 export default {
-  props: ['list','textColor'],
+  props: ['list', 'textColor'],
   components: {
-    CardComponent, // Certifique-se de que todos os componentes aqui estão sendo usados
+    CardComponent
   },
   emits: ['move-card', 'move-list', 'update-list-title', 'add-card', 'delete-list', 'delete-card', 'update-card-content', 'drag-end'],
   data() {
@@ -43,7 +43,9 @@ export default {
   watch: {
     list: {
       handler(newList) {
-        this.localList = JSON.parse(JSON.stringify(newList));
+        if (JSON.stringify(newList) !== JSON.stringify(this.localList)) {
+          this.localList = JSON.parse(JSON.stringify(newList));
+        }
       },
       deep: true
     }
@@ -68,9 +70,10 @@ export default {
       const listId = event.dataTransfer.getData('listId');
       if (cardId) {
         this.$emit('move-card', cardId, this.localList._id, fromListId, this.draggedOverCardIndex);
-      } else if (listId) {
+      } else if (listId && listId !== this.localList._id) {
         this.$emit('move-list', listId, this.localList._id);
       }
+      this.draggedOverCardIndex = null;
     },
     dropOnCard(index) {
       const cardId = event.dataTransfer.getData('cardId');
@@ -98,9 +101,6 @@ export default {
   }
 };
 </script>
-
-
-
 
 <style scoped>
 .list {
@@ -132,7 +132,7 @@ export default {
 
 .add-list, .add-card, .delete-list {
   background-color: #5aac44;
-  color: white; /* Mantenha apenas uma declaração de cor */
+  color: white;
   border: none;
   border-radius: 4px;
   padding: 10px 15px;
@@ -142,7 +142,6 @@ export default {
 }
 
 .add-list:hover, .add-card:hover, .delete-list:hover {
-  background-color: #5aac44;
-  color: white;
+  background-color: #519839;
 }
 </style>

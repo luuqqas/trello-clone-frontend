@@ -8,7 +8,12 @@
       <router-link v-if="!isLoggedIn" to="/login">Login</router-link>
       <router-link v-if="!isLoggedIn" to="/register">Registro</router-link>
       <router-link v-if="isLoggedIn" to="/dashboard">Dashboard</router-link>
-      <button v-if="isLoggedIn && $route.name === 'Dashboard'" @click="$emit('share-board')" class="nav-button">Compartilhar Quadro</button>
+      <div v-if="isLoggedIn && $route.name === 'Dashboard'">
+        <button @click="$emit('share-board')" class="nav-button">Compartilhar Quadro</button>
+        <span v-if="currentPermission && !isOwner" class="permission-indicator">
+          Permissão: {{ currentPermission === 'edit' ? 'Editar' : 'Visualizar' }}
+        </span>
+      </div>
     </div>
   </nav>
 </template>
@@ -20,6 +25,14 @@ export default {
   name: 'NavBar',
   props: {
     isBoardSelected: {
+      type: Boolean,
+      default: false
+    },
+    currentPermission: {
+      type: String,
+      default: null
+    },
+    isOwner: {
       type: Boolean,
       default: false
     }
@@ -47,3 +60,6 @@ export default {
   }
 };
 </script>
+
+
+<style scoped src="./NavBar.css"></style>

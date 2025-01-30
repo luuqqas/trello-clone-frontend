@@ -30,6 +30,7 @@ export default {
   methods: {
     async login() {
       try {
+        console.log("Iniciando o processo de login com email:", this.email);
         const response = await fetch('/api/auth/login', { // Certifique-se de que a rota está correta
           method: 'POST',
           headers: {
@@ -41,11 +42,22 @@ export default {
           })
         });
         const data = await response.json();
-        if (response.ok) {
+        console.log("Resposta da API de login:", data);
+
+        if (response.ok && data.accessToken) {
+          if (!data.user) {
+            throw new Error('Dados do usuário ausentes');
+          }
+          console.log("Usuário obtido da API:", data.user);
           localStorage.setItem('authToken', data.accessToken); // Certifique-se de que o token está sendo armazenado com a chave correta
+          localStorage.setItem('user', JSON.stringify(data.user)); // Armazenar o usuário localmente
+          this.$store.commit('setUser', data.user); // Armazenar o usuário no Vuex store
+          this.$store.commit('setAuthToken', data.accessToken); // Armazenar o token de autenticação no Vuex store
+          console.log("Usuário armazenado no Vuex store e localStorage:", data.user);
           this.$router.push('/dashboard'); // Redirecionar para o Dashboard
         } else {
-          this.errorMessage = data.error; // Definir a mensagem de erro para exibição
+          this.errorMessage = data.error || 'Erro desconhecido'; // Definir a mensagem de erro para exibição
+          console.error("Erro ao fazer login:", this.errorMessage);
         }
       } catch (error) {
         console.error('Erro ao fazer login:', error);

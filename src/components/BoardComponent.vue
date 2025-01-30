@@ -4,11 +4,7 @@
       {{ localBoard.title }}
       <i class="fa fa-star favorite-icon" :class="{ favorite: localBoard.favorite }" @click="toggleFavorite"></i>
     </h2>
-    <div
-      class="lists-container"
-      @dragover.prevent="handleDragOverContainer"
-      @drop="handleDropContainer"
-    >
+    <div class="lists-container" @dragover.prevent="handleDragOverContainer" @drop="handleDropContainer">
       <div
         v-for="(list, index) in localBoard.lists"
         :key="`${list._id}-${index}`"
@@ -19,20 +15,15 @@
         @dragover.prevent="handleDragOver"
         @dragleave="handleDragLeave"
         @drop="handleDrop"
-        :class="{'drag-over': dragOverIndex === index}"
+        :class="{ 'drag-over': dragOverIndex === index }"
       >
-        <ListComponent
-          :list="list"
-          @move-card="handleMoveCard"
-          @update-card-content="handleUpdateCardContent"
-        />
+        <ListComponent :list="list" @move-card="handleMoveCard" @update-card-content="handleUpdateCardContent" />
       </div>
     </div>
     <CreateBoardComponent @create-board="handleCreateBoard" />
     <button @click="handleDeleteBoard(localBoard._id)">Remover Quadro</button>
   </div>
 </template>
-
 
 <script>
 import axios from 'axios';
@@ -86,8 +77,12 @@ export default {
       this.dragOverIndex = null;
 
       try {
-        const listsOrder = this.localBoard.lists.map(list => list._id);
-        await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder });
+        const listsOrder = this.localBoard.lists.map((list) => list._id);
+        await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder }, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
+        });
         this.$emit('board-updated', this.localBoard);
       } catch (error) {
         console.error('Erro ao reordenar listas:', error);
@@ -102,8 +97,12 @@ export default {
         this.draggedListIndex = null;
 
         try {
-          const listsOrder = this.localBoard.lists.map(list => list._id);
-          await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder });
+          const listsOrder = this.localBoard.lists.map((list) => list._id);
+          await axios.put(`/api/boards/${this.localBoard._id}/lists/reorder`, { listsOrder }, {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
+          });
           this.$emit('board-updated', this.localBoard);
         } catch (error) {
           console.error('Erro ao reordenar listas:', error);
@@ -111,47 +110,42 @@ export default {
       }
     },
     async handleMoveCard(cardId, newListId, fromListId, newIndex) {
-      const fromList = this.localBoard.lists.find(list => list._id === fromListId);
-      const toList = this.localBoard.lists.find(list => list._id === newListId);
+      const fromList = this.localBoard.lists.find((list) => list._id === fromListId);
+      const toList = this.localBoard.lists.find((list) => list._id === newListId);
 
       if (fromList && toList) {
-        const cardIndex = fromList.cards.findIndex(card => card._id === cardId);
+        const cardIndex = fromList.cards.findIndex((card) => card._id === cardId);
 
         if (cardIndex !== -1) {
           const [card] = fromList.cards.splice(cardIndex, 1);
 
-          // Evita adicionar duplicatas
-          const existingCardIndex = toList.cards.findIndex(existingCard => existingCard._id === cardId);
+          const existingCardIndex = toList.cards.findIndex((existingCard) => existingCard._id === cardId);
           if (existingCardIndex === -1) {
             if (newIndex === null || newIndex >= toList.cards.length) {
-              toList.cards.push(card); // Adiciona ao final da lista
+              toList.cards.push(card);
             } else {
-              toList.cards.splice(newIndex, 0, card); // Adiciona na posição especificada
+              toList.cards.splice(newIndex, 0, card);
             }
           }
 
-          // Atualizar a data de modificação no frontend
           card.updatedAt = new Date();
 
-          // Atualizar a data de modificação no backend
           await axios.put(`/api/cards/${cardId}/move`, { newListId, newIndex }, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
           });
         }
       }
 
-      this.$emit('board-updated', this.localBoard); // Assegura que o estado é atualizado
+      this.$emit('board-updated', this.localBoard);
     },
     async handleUpdateCardContent(cardId, newContent, file) {
-      const card = this.localBoard.lists
-        .flatMap(list => list.cards)
-        .find(card => card._id === cardId);
+      const card = this.localBoard.lists.flatMap((list) => list.cards).find((card) => card._id === cardId);
 
       if (card) {
         card.content = newContent;
-        const updatedAtFrontend = new Date(); // Data de modificação no frontend
+        const updatedAtFrontend = new Date();
 
         if (file) {
           const formData = new FormData();
@@ -160,25 +154,25 @@ export default {
 
           await axios.put(`/api/cards/${cardId}`, formData, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-              'Content-Type': 'multipart/form-data'
-            }
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+              'Content-Type': 'multipart/form-data',
+            },
           }).then(() => {
             card.fileName = file.name;
-            card.updatedAt = updatedAtFrontend; // Atualiza a data de modificação no frontend com a data exata
-            this.$emit('board-updated', this.localBoard); // Atualiza o estado no componente pai
-          }).catch(error => {
+            card.updatedAt = updatedAtFrontend;
+            this.$emit('board-updated', this.localBoard);
+          }).catch((error) => {
             console.error('Erro ao atualizar cartão:', error);
           });
         } else {
           await axios.put(`/api/cards/${cardId}`, { content: newContent }, {
             headers: {
-              'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            }
+              Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+            },
           }).then(() => {
-            card.updatedAt = updatedAtFrontend; // Atualiza a data de modificação no frontend com a data exata
-            this.$emit('board-updated', this.localBoard); // Atualiza o estado no componente pai
-          }).catch(error => {
+            card.updatedAt = updatedAtFrontend;
+            this.$emit('board-updated', this.localBoard);
+          }).catch((error) => {
             console.error('Erro ao atualizar cartão:', error);
           });
         }
@@ -188,8 +182,8 @@ export default {
       try {
         const response = await axios.put(`/api/boards/${this.localBoard._id}/favorite`, {}, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
         });
         this.localBoard.favorite = response.data.favorite;
         this.$emit('board-updated', this.localBoard);
@@ -201,15 +195,14 @@ export default {
       try {
         await axios.delete(`/api/boards/${boardId}`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-          }
+            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
+          },
         });
         this.$emit('board-deleted', boardId);
       } catch (error) {
         console.error('Erro ao remover quadro:', error);
       }
-    }
-  }
+    },
+  },
 };
 </script>
-

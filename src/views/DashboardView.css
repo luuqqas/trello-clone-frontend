@@ -428,3 +428,32 @@ body {
     color: white; /* Garantir a cor correta */
     font-size: 2em; /* Tamanho apropriado */
   }
+
+  .permission-indicator {
+    color: #fff;
+    background-color: #5aac44;
+    padding: 10px 20px;
+    border-radius: 3px;
+    margin-left: 10px;
+    font-weight: 600;
+    display: inline-block;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out;
+    font-size: 14px; /* Certificando que a fonte é a mesma dos outros botões */
+  }
+  
+  .permission-indicator .view {
+    background-color: #ff9800; /* Cor para "Visualizar" */
+  }
+  
+  .permission-indicator .edit {
+    background-color: #5aac44; /* Cor para "Editar" */
+  }
+  
+  .permission-indicator:hover {
+    background-color: #519839; /* Cor para o hover */
+  }
+  
+  
+  
